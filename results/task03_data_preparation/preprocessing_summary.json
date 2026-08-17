@@ -1,0 +1,9 @@
+{
+  "split": "Official OGB chronological split",
+  "normalization": "Original OGB embeddings retained after comparison",
+  "label_shape": [
+    169343
+  ],
+  "training_edges": "Bidirectional edges created from original citations",
+  "missing_values": 0
+}
