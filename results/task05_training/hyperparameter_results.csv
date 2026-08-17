@@ -1,0 +1,5 @@
+model,run,hidden_dim,learning_rate,dropout,max_epochs,patience,status,best_validation_accuracy,best_epoch,training_seconds
+GraphSAGE,2,256,0.005,0.4,150,20,Completed,0.7266015410423279,149,69.81927112599999
+GCN,2,256,0.005,0.4,150,20,Completed,0.7170374393463135,146,79.328120582
+GraphSAGE,1,128,0.01,0.5,150,20,Completed,0.7148225903511047,148,39.164572918999966
+GCN,1,128,0.01,0.5,150,20,Completed,0.7138494253158569,149,42.46213108400002
