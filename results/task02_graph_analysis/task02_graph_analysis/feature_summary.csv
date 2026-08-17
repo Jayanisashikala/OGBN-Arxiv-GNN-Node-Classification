@@ -1,0 +1,8 @@
+statistic,value
+shape,"(169343, 128)"
+dtype,torch.float32
+mean,0.020484082400798798
+standard deviation,0.23322448134422302
+minimum,-1.3888649940490723
+maximum,1.6387439966201782
+missing values,0

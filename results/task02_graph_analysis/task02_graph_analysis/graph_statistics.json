@@ -1,0 +1,9 @@
+{
+  "nodes": 169343,
+  "edges": 1166243,
+  "features": 128,
+  "classes": 40,
+  "density": 4.066840277668502e-05,
+  "weak_components": 1,
+  "strong_components": 141223
+}
