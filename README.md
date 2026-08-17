@@ -1,186 +1,200 @@
 # OGBN-Arxiv Graph Neural Network Node Classification
 
-This project applies tensor operations, graph analytics, Graph Neural Networks (GNNs), explainability methods, and a Streamlit dashboard to the **OGBN-Arxiv citation network**. It was developed for the **CCS4354 - Tensors and Graphs** coursework at SLTC Research University.
+This project uses Graph Neural Networks (GNNs) to predict the subject category of research papers, using the **OGBN-Arxiv citation network**.
 
-The main objective is to predict the computer-science subject category of each research paper using its 128-dimensional feature vector and citation relationships.
+The goal is simple: given a paper's text-based features and its citation links to other papers, predict which of 40 computer-science subject areas it belongs to.
 
 ## Dataset
 
-The project uses the [OGBN-Arxiv](https://ogb.stanford.edu/docs/nodeprop/#ogbn-arxiv) dataset from the Open Graph Benchmark.
+We use the [OGBN-Arxiv](https://ogb.stanford.edu/docs/nodeprop/#ogbn-arxiv) dataset from the Open Graph Benchmark.
 
 | Property | Value |
 |---|---:|
-| Nodes | 169,343 papers |
-| Directed edges | 1,166,243 citations |
-| Node features | 128 |
-| Target classes | 40 |
+| Papers (nodes) | 169,343 |
+| Citations (directed edges) | 1,166,243 |
+| Features per paper | 128 |
+| Subject categories (classes) | 40 |
 | Task | Multi-class node classification |
-| Split | Official chronological OGB split |
+| Data split | Official OGB chronological split |
 
-Each node represents a scientific paper. A directed edge from paper A to paper B means that paper A cites paper B. The node features are numerical embeddings generated from paper titles and abstracts.
+Each paper is a node. A directed edge from paper A to paper B means paper A cites paper B. The 128 features are numerical embeddings generated from each paper's title and abstract.
 
-## Project Tasks
+## What the Project Does
 
-### Compulsory tasks
+### Main tasks
 
-1. **Tensor Fundamentals** - Tensor creation, indexing, reshaping, matrix multiplication, broadcasting, aggregation, and GPU operations.
-2. **Graph Representation and Analysis** - Edge-list representation, node-feature analysis, degree distributions, graph density, connected components, and sample-subgraph visualization.
-3. **Graph Data Preparation** - Official train, validation, and test splits; missing-value checks; feature preprocessing; and bidirectional message-passing edges.
-4. **GNN Development** - Three-layer GCN and GraphSAGE models with batch normalization, ReLU, dropout, and residual connections.
-5. **Training and Optimization** - Cross-entropy with label smoothing, Adam, weight decay, learning-rate scheduling, gradient clipping, early stopping, and hyperparameter comparison.
-6. **Model Evaluation** - Accuracy, macro precision, macro recall, macro F1, confusion matrices, and node-level predictions.
-7. **Explainability and Embeddings** - PCA visualization and neighbourhood-influence analysis.
-8. **Graph Intelligence Dashboard** - Streamlit pages for graph statistics, model performance, node classifications, and embeddings.
+1. **Tensor Basics** – Core PyTorch tensor operations: creation, indexing, reshaping, matrix multiplication, broadcasting, aggregation, and GPU usage.
+2. **Graph Analysis** – Builds an edge list, studies node features, and analyzes degree distribution, graph density, and connected components. Includes a sample subgraph visualization.
+3. **Data Preparation** – Uses the official train/validation/test splits, checks for missing values, and adds reverse edges so information can flow in both directions during message passing.
+4. **GNN Models** – Builds two models, GCN and GraphSAGE, each with 3 graph layers, batch normalization, ReLU activation, dropout, and a residual connection.
+5. **Training** – Trains both models using cross-entropy loss (with label smoothing), the Adam optimizer, a learning-rate scheduler, gradient clipping, and early stopping. Compares two hyperparameter configurations for each model.
+6. **Evaluation** – Measures accuracy, macro precision, macro recall, and macro F1 on both validation and test sets, plus confusion matrices.
+7. **Explainability** – Uses PCA to visualize learned embeddings, and checks whether a paper's predicted class agrees with its neighbours' classes.
+8. **Dashboard** – A Streamlit app showing graph statistics, model performance, and predictions.
 
 ### Bonus tasks
 
-9. **Graph Transformer** - A sampled attention-based graph classification experiment.
-10. **GATv2** - An advanced attention-based GNN evaluated on the same sampled graph.
-11. **Knowledge Graph Extension** - A small paper-subject knowledge graph with `cites` and `belongs_to` relationships.
-12. **Self-Supervised Graph Learning** - Masked-feature reconstruction followed by linear evaluation of frozen graph embeddings.
+9. **Graph Transformer** – Attention-based model tested on a 10,000-node sample.
+10. **GATv2** – A more advanced attention-based GNN, also tested on the sample.
+11. **Knowledge Graph Extension** – A small graph connecting papers to their subjects.
+12. **Self-Supervised Learning** – Trains an encoder to reconstruct masked features without using labels, then tests how useful the learned embeddings are.
 
-## Data Preparation
+## Data Split
 
-The project uses the official chronological split:
-
-| Split | Nodes | Percentage |
+| Split | Papers | Percentage |
 |---|---:|---:|
 | Training | 90,941 | 53.70% |
 | Validation | 29,799 | 17.60% |
 | Test | 48,603 | 28.70% |
 
-The split groups are complete and non-overlapping. Feature statistics are calculated from training nodes only to prevent data leakage. The original OGB feature embeddings are retained after preprocessing comparison. Reverse edges are added only for GNN message passing, increasing the message-passing edge count to 2,315,598.
+These groups don't overlap. Feature statistics are calculated using only the training set to avoid data leakage. The original OGB features are kept as-is. Reverse edges are added only for message passing, bringing the total edge count used by the models to 2,315,598.
 
-## Compulsory Models
+## The Two Models
 
-### Graph Convolutional Network
+**GCN (Graph Convolutional Network)** – Spreads and averages information across connected papers using normalized graph convolution.
 
-The GCN applies normalized graph convolution across connected papers. It contains two hidden graph layers and one output graph layer.
+**GraphSAGE** – Combines each paper's own features with information gathered from its neighbours, rather than just averaging everything together.
 
-### GraphSAGE
-
-GraphSAGE uses mean neighbourhood aggregation. It combines each paper's own representation with information received from connected papers.
-
-Both models use:
-
-- Three graph message-passing layers
-- Two batch-normalization layers
+Both models share the same basic structure:
+- 3 graph message-passing layers
+- 2 batch-normalization layers
 - ReLU activation
 - Dropout
 - A residual connection
-- A 40-class output layer
+- A final layer producing scores for the 40 classes
 
-## Training Configuration
+## Training Setup
 
-The executed experiment compared two configurations for each architecture:
+Two hyperparameter configurations were tested for each model:
 
-| Configuration | Hidden dimension | Learning rate | Dropout | Maximum epochs | Patience |
+| Configuration | Hidden size | Learning rate | Dropout | Max epochs | Patience |
 |---|---:|---:|---:|---:|---:|
 | 1 | 128 | 0.010 | 0.5 | 150 | 20 |
 | 2 | 256 | 0.005 | 0.4 | 150 | 20 |
 
-The training workflow uses:
-
-- Cross-entropy loss with label smoothing of 0.05
-- Adam optimizer
-- Weight decay of `5e-4`
+Training used:
+- Cross-entropy loss with label smoothing (0.05)
+- Adam optimizer with weight decay (5e-4)
 - `ReduceLROnPlateau` learning-rate scheduler
-- Gradient clipping with a maximum norm of 2.0
-- Validation-based checkpoint selection
-- Early stopping
+- Gradient clipping (max norm 2.0)
+- Early stopping based on validation accuracy
 
-The selected configuration for both models used 256 hidden units, a learning rate of 0.005, and dropout of 0.4.
+Configuration 2 (256 hidden units, learning rate 0.005, dropout 0.4) gave the best results for both models.
 
 ## Results
 
-### Compulsory model evaluation
+### Main model comparison
 
-| Model | Split | Accuracy | Macro precision | Macro recall | Macro F1 |
+| Model | Split | Accuracy | Macro Precision | Macro Recall | Macro F1 |
 |---|---|---:|---:|---:|---:|
-| GCN | Validation | 71.67% | 60.86% | 46.04% | 49.21% |
-| GCN | Test | 70.72% | 57.55% | 44.23% | 47.38% |
-| GraphSAGE | Validation | 72.57% | 60.46% | 49.63% | 52.00% |
-| GraphSAGE | Test | **70.85%** | **59.99%** | **47.67%** | **49.66%** |
+| GCN | Validation | 71.72% | 60.62% | 46.02% | 49.13% |
+| GCN | Test | 70.46% | 57.32% | 44.08% | 47.23% |
+| GraphSAGE | Validation | 72.63% | 60.05% | 49.49% | 51.85% |
+| GraphSAGE | Test | **71.03%** | **60.11%** | **47.64%** | **49.69%** |
 
-GraphSAGE produced the strongest overall validation and test results. Both models have lower macro metrics than accuracy because the 40 subject categories are imbalanced.
+GraphSAGE performed slightly better than GCN on every test metric. Both models score lower on macro precision/recall/F1 than on accuracy because the 40 subject categories are imbalanced (some categories have far more papers than others).
 
 ### Explainability examples
 
-| Node | True class | Predicted class | Confidence | Correct | Neighbour agreement |
+| Node | True Class | Predicted Class | Confidence | Correct? | Neighbours Agreeing |
 |---:|---:|---:|---:|---|---:|
 | 451 | 24 | 24 | 69.92% | Yes | 81.82% |
 | 346 | 24 | 10 | 43.54% | No | 0.00% |
 
-PCA provides a global view of the learned node embeddings. Neighbourhood analysis provides a local view by comparing a prediction with the labels of connected papers.
+PCA gives an overall picture of how papers cluster in the embedding space. Neighbourhood analysis checks whether a paper's prediction matches what its cited/citing papers are labeled as.
 
 ### Bonus results
 
-| Method | Evaluation scope | Validation accuracy | Test accuracy/output |
+| Method | Tested On | Validation Accuracy | Test Accuracy |
 |---|---|---:|---:|
 | Graph Transformer | 10,000-node sample | 50.60% | 49.30% |
 | GATv2 | 10,000-node sample | 52.85% | 51.15% |
-| Knowledge graph | 12 training papers | Not applicable | Triple table and graph visualization |
-| Self-supervised encoder | 10,000-node sample | 16.90% | 15.40% |
+| Knowledge Graph | 12 sample papers | — | Triple table + visualization |
+| Self-Supervised Encoder | 10,000-node sample | 16.90% | 15.40% |
 
-The Graph Transformer and GATv2 results are not directly comparable with the compulsory models because the attention models use a sampled subgraph. During self-supervised pretraining, reconstruction loss decreased from 0.0580 to 0.0138.
+The bonus attention models (Graph Transformer, GATv2) were tested on a smaller sample, so their numbers aren't directly comparable to the main GCN/GraphSAGE results. During self-supervised pretraining, the reconstruction loss dropped from 0.0580 to 0.0138, showing the encoder was learning useful patterns even without labels.
 
-## Technologies
+## Tools Used
 
-- Python
-- PyTorch
-- PyTorch Geometric
-- Open Graph Benchmark (`ogb`)
-- NumPy
-- pandas
-- SciPy
-- scikit-learn
-- NetworkX
-- Matplotlib
-- seaborn
-- Streamlit
-- Google Colab
+Python, PyTorch, PyTorch Geometric, OGB, NumPy, pandas, SciPy, scikit-learn, NetworkX, Matplotlib, seaborn, Streamlit, Google Colab
 
-## Installation
+## How to Run
 
-Install the main dependencies in Google Colab or a compatible Python environment:
+### Clone the project
+
+```bash
+git clone https://github.com/<your-username>/<your-repo-name>.git
+cd <your-repo-name>
+```
+
+### Install requirements
 
 ```bash
 pip install torch torch-geometric ogb streamlit pandas numpy scipy scikit-learn networkx matplotlib seaborn
 ```
 
-GPU acceleration is recommended for full-graph GCN and GraphSAGE training.
+A GPU is recommended for training the full-graph models.
 
-## Running the Notebook
+### Run the notebooks
 
-1. Open `CCS4354_Assignment.ipynb` in Google Colab.
-2. Enable a GPU runtime if one is available.
-3. Mount Google Drive when the notebook requests it.
-4. Run the notebook from the first cell to the final cell in order.
-5. Confirm that the dataset, results, models, figures, tables, and dashboard folders are created.
+The project is split into 12 notebooks inside the `notebooks/` folder, one per task. Run them **in order**, since later notebooks depend on files saved by earlier ones:
 
-The notebook downloads OGBN-Arxiv automatically on its first execution.
+1. `Task_01_-_Tensor_Fundamentals.ipynb`
+2. `Task_02_-_Graph_Representation.ipynb`
+3. `Task_03_-_Graph_Data_Preparation.ipynb`
+4. `Task_04_-_Graph_Neural_Network.ipynb`
+5. `Task_05_-_Model_Training.ipynb`
+6. `Task_06_-_Model_Evaluation.ipynb`
+7. `Task_07_-_Graph_Explainability.ipynb`
+8. `Task_08_-_Graph_Intelligence_Dashboard.ipynb`
+9. `Task_09_-_Graph_Transformer.ipynb` (bonus)
+10. `Task_10_-_Advanced_GNN_Architecture.ipynb` (bonus)
+11. `Task_11_-_Knowledge_Graph_Extension.ipynb` (bonus)
+12. `Task_12_-_Self_Supervised_Graph_Learning.ipynb` (bonus)
 
-## Running the Dashboard
+Steps:
 
-Run the notebook first because the dashboard reads the files generated by Tasks 2, 5, 6, and 7. Then run:
+1. Open each notebook in Google Colab, in the order above (either upload it from your cloned folder, or open it directly from GitHub via File → Open notebook → GitHub).
+2. Turn on a GPU runtime if available.
+3. Mount Google Drive when asked — this is where shared outputs (dataset, results, models, figures) are saved and read between notebooks.
+4. Run each notebook fully, top to bottom, before moving to the next one.
+5. Check that the dataset, results, models, figures, and dashboard folders are created after Task 01–08.
+
+The OGBN-Arxiv dataset downloads automatically the first time it's needed.
+
+### Run the dashboard
+
+Run Tasks 01–08 first — the dashboard needs files created by Tasks 02, 05, 06, and 07. Then run:
 
 ```bash
 streamlit run dashboard/app.py
 ```
 
-The dashboard contains four pages:
+The dashboard has four pages:
+- **Graph Statistics** – Dataset size, density, degree distributions, sample subgraph
+- **Model Performance** – Validation/test metrics and training curves
+- **Node Classification** – Predictions and confidence for selected papers
+- **Embeddings** – PCA visualization of learned representations
 
-- **Graph statistics** - Dataset size, density, degree distributions, and sample subgraph
-- **Model performance** - Validation/test metrics and training curves
-- **Node classification** - True class, predicted class, and confidence for selected nodes
-- **Embeddings** - PCA visualization and saved embedding coordinates
-
-## Expected Project Structure
+## Project Structure
 
 ```text
 OGBN_Arxiv_Project/
-├── CCS4354_Assignment.ipynb
 ├── README.md
+├── notebooks/
+│   ├── .gitkeep
+│   ├── Task_01_-_Tensor_Fundamentals.ipynb
+│   ├── Task_02_-_Graph_Representation.ipynb
+│   ├── Task_03_-_Graph_Data_Preparation.ipynb
+│   ├── Task_04_-_Graph_Neural_Network.ipynb
+│   ├── Task_05_-_Model_Training.ipynb
+│   ├── Task_06_-_Model_Evaluation.ipynb
+│   ├── Task_07_-_Graph_Explainability.ipynb
+│   ├── Task_08_-_Graph_Intelligence_Dashboard.ipynb
+│   ├── Task_09_-_Graph_Transformer.ipynb
+│   ├── Task_10_-_Advanced_GNN_Architecture.ipynb
+│   ├── Task_11_-_Knowledge_Graph_Extension.ipynb
+│   └── Task_12_-_Self_Supervised_Graph_Learning.ipynb
 ├── dashboard/
 │   └── app.py
 ├── data/
@@ -197,47 +211,12 @@ OGBN_Arxiv_Project/
     └── task08_dashboard/
 ```
 
-## Main Saved Outputs
-
-- Graph statistics and structural-analysis tables
-- Degree-distribution and sample-subgraph figures
-- Split and preprocessing summaries
-- Best GCN and GraphSAGE model checkpoints
-- Hyperparameter-comparison results
-- Training histories and accuracy curves
-- Validation and test metrics
-- Confusion matrices
-- Node-level classification results
-- PCA embedding coordinates and figures
-- Neighbourhood-influence table
-- Streamlit dashboard application
-
 ## Limitations
 
-- OGBN-Arxiv contains imbalanced subject classes.
-- Related research areas may have overlapping feature and citation patterns.
-- PCA reduces high-dimensional embeddings to only two components.
-- Neighbourhood agreement provides descriptive evidence, not causal proof.
-- The attention and self-supervised bonus experiments use a sampled graph.
-- The small knowledge graph demonstrates the concept but does not convert the complete dataset into a heterogeneous graph.
+- The 40 subject categories are imbalanced, which affects macro metrics.
+- Some related research areas have overlapping features and citation patterns, making them harder to tell apart.
+- PCA compresses high-dimensional embeddings down to 2 dimensions, so some detail is lost.
+- Neighbourhood agreement shows correlation, not proof of *why* the model made a decision.
+- The Graph Transformer, GATv2, and self-supervised experiments run on a smaller sample, not the full graph.
+- The knowledge graph extension is a small demonstration, not a full conversion of the dataset.
 
-## Group Members
-
-| Student ID | Name |
-|---|---|
-| CIT-23-02-0162 | Jayani Sashikala |
-| CIT-23-02-0130 | Sandani Senevithna |
-| CIT-23-02-0073 | Ganguli Kaluarachchi |
-| CIT-23-02-0358 | Dureksha Arangala |
-
-## Academic Integrity
-
-This project was developed for academic coursework. Anyone reusing the repository should cite the original dataset and comply with their institution's academic-integrity requirements.
-
-## References
-
-- Hu, W. et al. *Open Graph Benchmark: Datasets for Machine Learning*. NeurIPS, 2020.
-- Kipf, T. N. and Welling, M. *Semi-Supervised Classification with Graph Convolutional Networks*. ICLR, 2017.
-- Hamilton, W. L., Ying, R., and Leskovec, J. *Inductive Representation Learning on Large Graphs*. NeurIPS, 2017.
-- PyTorch Geometric documentation: <https://pytorch-geometric.readthedocs.io/>
-- OGB documentation: <https://ogb.stanford.edu/docs/>
